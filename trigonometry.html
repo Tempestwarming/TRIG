@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trigonometry Mountain Method</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="trigonometry.css">
+  </head>
+  <body class="trig-app">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Maths tools">
+        <div class="brand">
+          <div class="brand-mark trig-mark" aria-hidden="true">△</div>
+          <div>
+            <h1>Trigonometry</h1>
+            <p>SOH CAH TOA mountain method</p>
+          </div>
+        </div>
+
+      </aside>
+
+      <main class="workspace">
+        <section class="tool-panel is-active" aria-labelledby="trig-title">
+          <header class="tool-header">
+            <div>
+              <h2 id="trig-title">SOH CAH TOA</h2>
+              <p>Label the triangle, choose the mountain, then place the values.</p>
+            </div>
+            <div class="header-actions">
+              <div class="mode-toggle compact-toggle" role="group" aria-label="Question type">
+                <button class="mode-button is-active" type="button" data-question-mode="side">Find side</button>
+                <button class="mode-button" type="button" data-question-mode="angle">Find angle</button>
+              </div>
+              <button class="primary-action" type="button" id="new-trig-question">New question</button>
+            </div>
+          </header>
+
+          <div class="trig-grid">
+            <section class="activity-surface trig-surface">
+              <div class="mountain-row" id="ratio-buttons" aria-label="SOH CAH TOA mountains"></div>
+
+              <div class="question-card">
+                <div class="question-strip">
+                  <div>
+                    <div class="question-label">Question</div>
+                    <div class="trig-prompt" id="trig-prompt"></div>
+                  </div>
+                  <button class="secondary-action" type="button" id="check-labels">Check labels</button>
+                </div>
+
+                <div class="triangle-stage" id="triangle-stage">
+                  <div class="triangle-canvas">
+                    <div class="triangle-diagram" id="triangle-diagram" aria-label="Right-angled triangle question"></div>
+                    <div class="side-label-control label-picker-a">
+                      <select data-picker="a" aria-label="Choose O, A, or H">
+                        <option value=""></option>
+                        <option value="O">O</option>
+                        <option value="A">A</option>
+                        <option value="H">H</option>
+                      </select>
+                    </div>
+                    <div class="side-label-control label-picker-b">
+                      <select data-picker="b" aria-label="Choose O, A, or H">
+                        <option value=""></option>
+                        <option value="O">O</option>
+                        <option value="A">A</option>
+                        <option value="H">H</option>
+                      </select>
+                    </div>
+                    <div class="side-label-control label-picker-c">
+                      <select data-picker="c" aria-label="Choose O, A, or H">
+                        <option value=""></option>
+                        <option value="O">O</option>
+                        <option value="A">A</option>
+                        <option value="H">H</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="feedback" id="trig-feedback" aria-live="polite"></div>
+            </section>
+
+            <aside class="answer-panel trig-working-panel" aria-label="Trigonometry working">
+              <div class="working-placeholder" id="working-placeholder">
+                <div class="placeholder-mark" aria-hidden="true">△</div>
+                <p>Label first, then choose a mountain.</p>
+              </div>
+
+              <div class="working-area" id="working-area" hidden>
+                <div class="selected-title">
+                  <span id="selected-ratio-title"></span>
+                  <button class="link-action" type="button" id="clear-mountain">Clear</button>
+                </div>
+
+                <div class="chip-bank" id="chip-bank" aria-label="Measurements"></div>
+
+                <div class="large-mountain" id="large-mountain" aria-label="Selected mountain"></div>
+
+                <div class="formula-box" id="formula-box" aria-live="polite">
+                  <div class="question-label">Formula</div>
+                  <div id="formula-line">Place all three values.</div>
+                  <div id="solve-line"></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="trigonometry.js"></script>
+  </body>
+</html>
