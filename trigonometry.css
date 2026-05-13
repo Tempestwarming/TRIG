@@ -275,6 +275,8 @@
 
 .trig-working-panel {
   min-height: 100%;
+  gap: 10px;
+  padding: 12px;
 }
 
 .working-placeholder {
@@ -308,7 +310,8 @@
 
 .working-area {
   display: grid;
-  gap: 14px;
+  gap: 8px;
+  align-content: start;
 }
 
 .selected-title {
@@ -320,21 +323,21 @@
 
 #selected-ratio-title {
   color: var(--ink);
-  font-size: 1.3rem;
+  font-size: 1.08rem;
   font-weight: 900;
 }
 
 .chip-bank {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .value-chip {
-  min-height: 50px;
+  min-height: 42px;
   border: 2px solid var(--line);
   border-radius: 8px;
-  padding: 8px;
+  padding: 6px;
   color: var(--ink);
   background: #ffffff;
   font-size: 1.05rem;
@@ -356,16 +359,16 @@
   display: grid;
   place-items: center;
   align-items: start;
-  min-height: 360px;
+  min-height: 268px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding-top: 54px;
+  padding-top: 38px;
   background: linear-gradient(135deg, #ffffff, #ecfbff);
 }
 
 .mountain-workspace {
   position: relative;
-  width: min(100%, 300px);
+  width: min(100%, 240px);
   aspect-ratio: 1.05;
 }
 
@@ -380,8 +383,8 @@
   position: absolute;
   display: grid;
   place-items: center;
-  width: 92px;
-  min-height: 54px;
+  width: 82px;
+  min-height: 46px;
   border: 2px dashed #93c5fd;
   border-radius: 8px;
   padding: 6px;
@@ -424,8 +427,8 @@
 
 .formula-box {
   display: grid;
-  gap: 7px;
-  min-height: 112px;
+  gap: 9px;
+  min-height: 210px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
@@ -442,6 +445,29 @@
 
 #solve-line {
   color: #0f766e;
+}
+
+.solution-step {
+  border: 1px solid rgba(19, 184, 166, 0.28);
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.solution-step + .solution-step {
+  margin-top: 7px;
+}
+
+.reveal-step-action {
+  min-height: 44px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--green);
+  font-weight: 850;
+}
+
+.reveal-step-action:hover {
+  background: #15803d;
 }
 
 @media (max-width: 1080px) {

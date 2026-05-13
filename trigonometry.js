@@ -19,6 +19,10 @@ const state = {
   selectedRatio: null,
   selectedChip: null,
   drops: {},
+  ratioQueue: [],
+  lastRatioKey: null,
+  solutionSteps: [],
+  visibleStepCount: 0,
 };
 
 const pickerSides = {
@@ -35,6 +39,23 @@ function pick(items) {
   return items[randomInt(0, items.length - 1)];
 }
 
+function shuffle(items) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+function nextRatioKey() {
+  if (!state.ratioQueue.length) {
+    state.ratioQueue = shuffle(Object.keys(ratios));
+    if (state.ratioQueue.length > 1 && state.ratioQueue[0] === state.lastRatioKey) {
+      state.ratioQueue.push(state.ratioQueue.shift());
+    }
+  }
+
+  const ratioKey = state.ratioQueue.shift();
+  state.lastRatioKey = ratioKey;
+  return ratioKey;
+}
+
 function degreesToRadians(degrees) {
   return (degrees * Math.PI) / 180;
 }
@@ -44,7 +65,10 @@ function radiansToDegrees(radians) {
 }
 
 function formatValue(value, places = 1) {
-  return Number(value).toFixed(places).replace(/\.0$/, "");
+  return Number(value)
+    .toFixed(places)
+    .replace(/(\.\d*?)0+$/, "$1")
+    .replace(/\.$/, "");
 }
 
 function sideDisplay(value) {
@@ -56,8 +80,10 @@ function generateQuestion() {
   state.selectedRatio = null;
   state.selectedChip = null;
   state.drops = {};
+  state.solutionSteps = [];
+  state.visibleStepCount = 0;
 
-  const ratioKey = pick(Object.keys(ratios));
+  const ratioKey = nextRatioKey();
   const orientation = pick(["low", "high"]);
   state.question = state.mode === "side" ? generateSideQuestion(ratioKey, orientation) : generateAngleQuestion(ratioKey, orientation);
 
@@ -192,38 +218,54 @@ function sideToRoleMap(question) {
 }
 
 function getTriangleLayout(question) {
-  const roleMap = roleToSideMap(question);
-  const rawBase = roleMap.O === "base" ? question.sides.O : question.sides.A;
-  const rawVertical = roleMap.O === "vertical" ? question.sides.O : question.sides.A;
-  const scale = Math.min(320 / rawBase, 210 / rawVertical);
-  const baseLength = rawBase * scale;
-  const verticalLength = rawVertical * scale;
-  const rightX = 470;
-  const bottomY = 300;
-  const leftX = rightX - baseLength;
-  const topY = bottomY - verticalLength;
+  const rightX = 475;
+  const bottomY = 292;
+  const leftX = 145;
+  const topY = 92;
 
-  return {
+  const layout = {
     bottomY,
     left: { x: leftX, y: bottomY },
     right: { x: rightX, y: bottomY },
     top: { x: rightX, y: topY },
+  };
+  const sidePositions = getSidePositions(layout);
+  return {
+    ...layout,
+    labels: sidePositions.labels,
+    controls: sidePositions.controls,
+  };
+}
+
+function getSidePositions(layout) {
+  const hypotenuseLabel = outsideHypotenusePoint(layout.left, layout.top, 44);
+
+  return {
+    labels: {
+      base: { x: midpoint(layout.left, layout.right).x, y: layout.bottomY + 84 },
+      vertical: { x: layout.right.x + 78, y: midpoint(layout.top, layout.right).y + 34 },
+      hypotenuse: hypotenuseLabel,
+    },
     controls: {
-      base: { className: "label-picker-a", x: (leftX + rightX) / 2, y: bottomY + 58 },
-      vertical: { className: "label-picker-b", x: rightX + 58, y: (topY + bottomY) / 2 },
-      hypotenuse: { className: "label-picker-c", ...hypotenuseControlPoint({ x: leftX, y: bottomY }, { x: rightX, y: topY }) },
+      base: { className: "label-picker-a", x: midpoint(layout.left, layout.right).x, y: layout.bottomY + 38 },
+      vertical: { className: "label-picker-b", x: layout.right.x + 78, y: midpoint(layout.top, layout.right).y - 14 },
+      hypotenuse: {
+        className: "label-picker-c",
+        x: hypotenuseLabel.x,
+        y: hypotenuseLabel.y - 50,
+      },
     },
   };
 }
 
-function hypotenuseControlPoint(left, top) {
+function outsideHypotenusePoint(left, top, offset) {
   const mid = midpoint(left, top);
   const direction = normaliseVector({ x: top.x - left.x, y: top.y - left.y });
   const normal = { x: direction.y, y: -direction.x };
 
   return {
-    x: mid.x + normal.x * 54,
-    y: mid.y + normal.y * 54,
+    x: mid.x + normal.x * offset,
+    y: mid.y + normal.y * offset,
   };
 }
 
@@ -321,16 +363,7 @@ function visibleTextForRole(question, role) {
 }
 
 function labelPositionForSide(side, layout) {
-  if (side === "base") return { x: (layout.left.x + layout.right.x) / 2, y: layout.bottomY + 24 };
-  if (side === "vertical") return { x: layout.right.x - 46, y: (layout.top.y + layout.right.y) / 2 };
-
-  const mid = midpoint(layout.left, layout.top);
-  const direction = normaliseVector({ x: layout.top.x - layout.left.x, y: layout.top.y - layout.left.y });
-  const outsideNormal = { x: direction.y, y: -direction.x };
-  return {
-    x: mid.x - outsideNormal.x * 28,
-    y: mid.y - outsideNormal.y * 28,
-  };
+  return layout.labels[side];
 }
 
 function positionLabelControls(question) {
@@ -428,6 +461,9 @@ function hideWorking() {
   $("#large-mountain").innerHTML = "";
   $("#formula-line").textContent = "Place all three values.";
   $("#solve-line").textContent = "";
+  $("#reveal-step").hidden = true;
+  state.solutionSteps = [];
+  state.visibleStepCount = 0;
 }
 
 function getChips() {
@@ -539,6 +575,9 @@ function updateFormula() {
   if (!allFilled) {
     $("#formula-line").textContent = "Place all three values.";
     $("#solve-line").textContent = "";
+    $("#reveal-step").hidden = true;
+    state.solutionSteps = [];
+    state.visibleStepCount = 0;
     return;
   }
 
@@ -550,33 +589,73 @@ function updateFormula() {
   if (!allCorrect) {
     $("#formula-line").textContent = "Check the mountain placements.";
     $("#solve-line").textContent = "";
+    $("#reveal-step").hidden = true;
+    state.solutionSteps = [];
+    state.visibleStepCount = 0;
     setFeedback("One value is in the wrong part of the mountain.", "is-wrong");
     return;
   }
 
+  state.solutionSteps = buildSolutionSteps();
+  state.visibleStepCount = 0;
+  renderSolutionSteps();
+  setFeedback("The mountain is complete. Reveal the working when students are ready to check.", "is-correct");
+}
+
+function buildSolutionSteps() {
+  const ratio = ratios[state.selectedRatio];
+
   if (state.question.type === "angle") {
     const numerator = formatValue(state.question.sides[ratio.numerator]);
     const denominator = formatValue(state.question.sides[ratio.denominator]);
-    $("#formula-line").textContent = `x = ${ratio.key}^-1(${numerator} / ${denominator})`;
-    $("#solve-line").textContent = `x = ${formatValue(state.question.answer)}°`;
-    setFeedback("The mountain is complete. The inverse trig step gives the angle.", "is-correct");
-    return;
+    const quotient = formatValue(state.question.sides[ratio.numerator] / state.question.sides[ratio.denominator], 3);
+    return [
+      `x = ${ratio.key}^-1(${numerator} ÷ ${denominator})`,
+      `x = ${ratio.key}^-1(${quotient})`,
+      `x = ${formatValue(state.question.answer)}°`,
+    ];
   }
 
   const angle = state.question.angle;
   const knownRole = state.question.knownRole;
   const known = formatValue(state.question.sides[knownRole]);
   const answer = formatValue(state.question.answer);
+  const trigValue = formatValue(Math[ratio.key](degreesToRadians(angle)), 3);
 
   if (state.question.unknownRole === ratio.numerator) {
-    $("#formula-line").textContent = `x = ${ratio.key}(${angle}°) × ${known}`;
-    $("#solve-line").textContent = `x = ${answer} cm`;
-  } else {
-    $("#formula-line").textContent = `x = ${known} ÷ ${ratio.key}(${angle}°)`;
-    $("#solve-line").textContent = `x = ${answer} cm`;
+    return [
+      `x = ${ratio.key}(${angle}°) × ${known}`,
+      `x = ${trigValue} × ${known}`,
+      `x = ${answer} cm`,
+    ];
   }
 
-  setFeedback("The mountain is complete. The formula now follows from the positions.", "is-correct");
+  return [
+    `x = ${known} ÷ ${ratio.key}(${angle}°)`,
+    `x = ${known} ÷ ${trigValue}`,
+    `x = ${answer} cm`,
+  ];
+}
+
+function renderSolutionSteps() {
+  const visibleSteps = state.solutionSteps.slice(0, state.visibleStepCount);
+  $("#formula-line").textContent = state.visibleStepCount
+    ? "Working"
+    : "Values placed. Reveal the working one step at a time.";
+  $("#solve-line").innerHTML = visibleSteps.map((step) => `<div class="solution-step">${step}</div>`).join("");
+  const revealButton = $("#reveal-step");
+  revealButton.hidden = state.visibleStepCount >= state.solutionSteps.length;
+  revealButton.textContent = state.visibleStepCount ? "Reveal next step" : "Reveal first step";
+}
+
+function revealNextStep() {
+  if (!state.solutionSteps.length) return;
+  state.visibleStepCount = Math.min(state.visibleStepCount + 1, state.solutionSteps.length);
+  renderSolutionSteps();
+
+  if (state.visibleStepCount === state.solutionSteps.length) {
+    setFeedback("Answer revealed. Students can compare this with their own calculation.", "is-correct");
+  }
 }
 
 function setFeedback(message, feedbackState) {
@@ -600,6 +679,7 @@ function setupEvents() {
   $("#new-trig-question").addEventListener("click", generateQuestion);
   $("#check-labels").addEventListener("click", checkLabels);
   $("#clear-mountain").addEventListener("click", clearMountain);
+  $("#reveal-step").addEventListener("click", revealNextStep);
 
   $$("[data-question-mode]").forEach((button) => {
     button.addEventListener("click", () => {
